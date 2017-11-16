@@ -1,0 +1,91 @@
+#created by lse 
+#Automate the boring stuff with python
+#Extract several bits of information from several files in a repository
+
+
+import os, collections
+
+def find_interfaces():
+	path = '/copia/'
+	interfaces = ["GSM_Um", "GSM_A", "GSM_Gb", "UMTS_Uu" , "UMTS_IuPS", "UMTS_IuCS" , "LTE_Uu", "LTE_S1", "ISDN", "ISDN_PRI", "PSTN", "ISUP", "CDMA2000"]
+	empiezaCon = 'TCEDIT_PARAM Description {'
+	nuevaLista = []
+	description = ""
+	finalDescription = ""
+	parametrosA = ""
+	parametrosB = ""
+	depth = ""
+	for root,dirs,files in os.walk(path):
+		if root[len(path):-1].count(os.sep) == 0:
+			depth = "section"
+		if root[len(path):-1].count(os.sep) == 1:
+			depth = "subsection"
+		if root[len(path):-1].count(os.sep) == 2:
+			depth = "subsubsection"
+		if root[len(path):-1].count(os.sep) == 3:
+			depth = "paragraph"
+		print "}" + "\n" + "\\newpage" + "\n" + "\%s{"%(depth)+ "%s" %os.path.basename(root).replace("_", '\_') + "}"+ "\n" + "\chungeltable{%"
+		parametros = []
+		for documento in files:
+			if not documento.startswith('__') and not documento.startswith('pg_') and not documento.startswith('ts_'):
+				archivos = os.path.basename(documento).replace(".tce", '').replace("tc_", '').replace("_", '\_')
+				parametros.append(archivos)
+		print ', '.join(parametros)
+		print "&"
+		for documento in files:
+			if not documento.startswith('__') and not documento.startswith('pg_') and not documento.startswith('ts_'):
+				descripciones = []
+				with open(os.path.join(root, documento), 'r') as fin:
+					for lines in fin:
+						if 'TCEDIT_PARAM Description {' in lines:
+							lineas =lines.replace("TCEDIT_PARAM Description {", '').replace("}", '').replace(",",';').replace("TCEDIT_Expr", '').replace("{", '').replace("\n", ',').replace("_", '\_').replace("`", "'")
+							print lineas
+							break
+		for item in interfaces:
+			print "&%" + "%s"%item
+			for documento in files:
+				diccionarioDeObjetos = {}
+				if not documento.startswith('__') and not documento.startswith('pg_') and not documento.startswith('ts_'):
+					print "%%" +"%s" %os.path.basename(documento).replace(".tce", '').replace("tc_", '').replace("_", '\_')
+					with open(os.path.join(root, documento), 'r') as fin:
+						listaB = []
+						for lines in fin:
+							if "TCEDIT_PARAM ResourceTypes {" in lines:
+								parametrosA = lines.replace("TCEDIT_PARAM ResourceTypes {", '').replace("}", '').replace("*", '').strip()
+								parametrosA = parametrosA.split(" ")
+								parametrosA = [x for x in parametrosA if x != '']
+								for i in parametrosA:
+									listaB.append(i)
+						listaC =[]
+						for objeto in listaB:
+							if objeto in interfaces:
+								listaC.append(objeto)
+						for elemento in listaC:
+							try:
+								diccionarioDeObjetos[elemento] +=1
+							except:
+								diccionarioDeObjetos[elemento] =1
+						if item not in diccionarioDeObjetos.keys():
+							diccionarioDeObjetos[item] = 0
+						if diccionarioDeObjetos.get(item) == 0:
+							print " - ,"
+						if diccionarioDeObjetos.get(item) == 1:
+							print " A ,"
+						if diccionarioDeObjetos.get(item) == 2:
+							print "A; B ,"
+						if diccionarioDeObjetos.get(item) == 3:
+							print "A; B ; C ,"
+						if diccionarioDeObjetos.get(item) == 4:
+							print "A; B; C; D ,"
+						if diccionarioDeObjetos.get(item) > 4:
+							print "A; B; C; D and other ,"					
+	print "}"
+
+
+
+#create this file
+import sys
+former, sys.stdout = sys.stdout, open("/engorroso/testResults.tex", "w")
+find_interfaces()	
+results, sys.stdout = sys.stdout, former	
+results.close()
