@@ -1,9 +1,8 @@
+import os, collections
+
 #created by lse 
 #Automate the boring stuff with python
-#Extract several bits of information from several files in a repository
-
-
-import os, collections
+#Extract info from a repository
 
 def find_interfaces():
 	path = '/copia/'
